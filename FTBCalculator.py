@@ -1,4 +1,9 @@
+import math
+
 from prettytable import PrettyTable
+
+H2B_MAX_PRICE = 600000
+H2B_MAX_LOAN = int(0.4 * H2B_MAX_PRICE)
 
 
 class FTBCalculator:
@@ -19,13 +24,14 @@ class FTBCalculator:
 
     def converge_on_price(self, deposit, mortgage, house_price):
         h2b_loan = (house_price / 60 * 40) if self.help_to_buy else 0
+        h2b_loan = min(H2B_MAX_LOAN, h2b_loan)
         if (self.help_to_buy):
-            house_price2 = min(house_price + h2b_loan, 600000)
+            house_price2 = min(house_price + h2b_loan, H2B_MAX_PRICE)
         stamp_duty = self.get_stamp_duty_discounted(house_price2)
         if (deposit - stamp_duty + mortgage + h2b_loan < house_price2):
             return self.converge_on_price(deposit, mortgage, house_price - 1000)
         else:
-            return deposit - stamp_duty, stamp_duty, house_price2
+            return math.ceil(deposit - stamp_duty), h2b_loan, stamp_duty, house_price2
 
     def get_budget(self):
         deposit = self.savings
@@ -36,12 +42,15 @@ class FTBCalculator:
 
         mortgage_loan = int(self.mortgage_broker.get_loan_amount(self.salary))
 
-        deposit, stamp_duty, house_price = self.converge_on_price(
+        deposit, h2b_loan, stamp_duty, house_price = self.converge_on_price(
             deposit, mortgage_loan, deposit + mortgage_loan)
+
+        if ((deposit + h2b_loan + mortgage_loan) > house_price):
+            mortgage_loan -= (deposit + h2b_loan + mortgage_loan) - house_price
 
         all_fees = self.static_fees
         all_fees.append((stamp_duty, "Stamp Duty"))
-        return deposit, all_fees, house_price
+        return all_fees, deposit, mortgage_loan, h2b_loan, house_price
 
     def get_stamp_duty_discounted(self, house_price):
         tax = 0

@@ -9,7 +9,7 @@ def calculate_affordability(savings, salary, mortgage_loan_factor, help_to_buy):
     broker = MortgageBroker(mortgage_loan_factor)
     ftbcalc = FTBCalculator(savings, salary, broker, help_to_buy)
 
-    deposit, all_fees, house_price = ftbcalc.get_budget()
+    all_fees, deposit, mortgage_loan, h2b_loan, house_price = ftbcalc.get_budget()
     sum_all_fees = sum(fee for fee, _ in all_fees)
 
     print("With £{} savings, you would spend £{} on fees:".format(
@@ -21,8 +21,13 @@ def calculate_affordability(savings, salary, mortgage_loan_factor, help_to_buy):
     fees_table.align["Fee"] = "l"
     fees_table.align["Cost(£)"] = "r"
     print(fees_table.get_string(sortby="Cost(£)"))
-    print("\nWhich means your effective deposit on a house of price £{} is £{}".format(
+    print()
+    print("Which means your effective deposit on a house of price £{} is £{}".format(
         house_price, deposit))
+    print("i.e. £{} deposit\n  + £{} mortgage({}x salary)\n  + £{} equity loan\n  = £{} house".format(
+        deposit, mortgage_loan, round(
+            mortgage_loan/salary, 2), h2b_loan, house_price
+    ))
 
 
 def main():
